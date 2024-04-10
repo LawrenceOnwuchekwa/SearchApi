@@ -1,38 +1,61 @@
 package com.api.searchtool.Controllers;
 
-import com.api.searchtool.DocumentRepresentation.FileDocumentRepository;
-import com.api.searchtool.StaticHelperMethods.StaticHelperMethods;
+import com.api.searchtool.DocumentRepresentation.FileService;
+import com.api.searchtool.DocumentRepresentation.Indexer;
+import com.api.searchtool.DocumentRepresentation.RepositoryConfig;
+import com.api.searchtool.Services.InputOutputOp;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 @RestController
 public class Controller {
 
+    private final Indexer indexer;
+
+    private final FileService fileService;
+
+    private final InputOutputOp inputOutputOp;
+
+    private final RepositoryConfig repositoryConfig;
+
+
     @Autowired
-    FileDocumentRepository fileDocumentRepository;
-
-    @GetMapping("/upload")
-    public ResponseEntity<String> handlefileUpload(@RequestParam("file")MultipartFile file) throws IOException {
-        String originalFilename = file.getOriginalFilename();
-        String fileExtension = StaticHelperMethods.getFileExtension(originalFilename);
-        List<String> extension = fileDocumentRepository.getAllowedExtensions();
-        if(fileExtension == null || !extension.contains(fileExtension.toLowerCase())){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Unsupported File type");
-        }
-        Path targetPath = Paths.get(fileDocumentRepository.getPath(),originalFilename);
-        file.transferTo(targetPath.toFile());
-        return ResponseEntity.ok("File uploaded successfully: " + originalFilename);
-
+    public Controller(Indexer indexer, FileService fileService, InputOutputOp inputOutputOp, RepositoryConfig repositoryConfig) {
+        this.indexer = indexer;
+        this.fileService = fileService;
+        this.inputOutputOp = inputOutputOp;
+        this.repositoryConfig = repositoryConfig;
     }
 
+    @GetMapping("/result")
+    public List<File> showDocs() throws FileNotFoundException {
+        return inputOutputOp.doSomethingWithRepository();
+    }
+
+    /**
+     * @param file
+     * @return
+     * @throws IOException
+     */
+    @PostMapping("/upload")
+    public String handleFileUpload(@RequestParam("file") MultipartFile file) {
+        fileService.removeExistingFiles();
+        fileService.saveFile(file, repositoryConfig.getPath());
+        return "redirect:/success";
+    }
+
+    @GetMapping("/push")
+    public String handleFileUpload(Model model) {
+        return "index.html";
+    }
 }
