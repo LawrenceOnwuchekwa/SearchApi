@@ -14,7 +14,6 @@ import java.util.List;
 public class InputOutputOp {
     private final RepositoryConfig repositoryConfig;
 
-    @Autowired
     public InputOutputOp(RepositoryConfig repositoryConfig) {
         this.repositoryConfig = repositoryConfig;
     }

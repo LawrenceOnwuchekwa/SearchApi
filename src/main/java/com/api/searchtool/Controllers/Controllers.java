@@ -5,6 +5,7 @@ import com.api.searchtool.DocumentRepresentation.Indexer;
 import com.api.searchtool.DocumentRepresentation.RepositoryConfig;
 import com.api.searchtool.Services.InputOutputOp;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,9 +17,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @RestController
-public class Controller {
+public class Controllers {
 
     private final Indexer indexer;
 
@@ -30,7 +33,7 @@ public class Controller {
 
 
     @Autowired
-    public Controller(Indexer indexer, FileService fileService, InputOutputOp inputOutputOp, RepositoryConfig repositoryConfig) {
+    public Controllers(Indexer indexer, FileService fileService, InputOutputOp inputOutputOp, RepositoryConfig repositoryConfig) {
         this.indexer = indexer;
         this.fileService = fileService;
         this.inputOutputOp = inputOutputOp;
@@ -48,14 +51,13 @@ public class Controller {
      * @throws IOException
      */
     @PostMapping("/upload")
-    public String handleFileUpload(@RequestParam("file") MultipartFile file) {
+    public void handleFileUpload(@RequestParam("file") MultipartFile file) {
         fileService.removeExistingFiles();
-        fileService.saveFile(file, repositoryConfig.getPath());
-        return "redirect:/success";
+        fileService.saveFile(file);
     }
 
-    @GetMapping("/push")
-    public String handleFileUpload(Model model) {
-        return "index.html";
+    @GetMapping("/indexes")
+    public Map<String, Set<String>> showIndex(){
+        return indexer.indexAllFiles();
     }
 }
